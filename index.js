@@ -2,9 +2,26 @@ window.addEventListener("DOMContentLoaded", () => {
   Keyboard.init();
 });
 
-async function sendRequest(payload) {
+function debounce(func, wait) {
+  let last = null;
+  return function executedFunction(...args) {
+    const context = this;
+
+    if (!last) {
+      last = Date.now();
+    }
+
+    const now = Date.now();
+    if (now - last > wait) {
+      last = now;
+      func.apply(context, args);
+    }
+  };
+}
+
+async function sendRequest(payload, type = "keypress") {
   try {
-    const response = await fetch("http://192.168.0.73:5000/keypress", {
+    const response = await fetch(`http://192.168.0.73:5000/${type}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -12,9 +29,8 @@ async function sendRequest(payload) {
       body: JSON.stringify(payload),
     });
 
-    if (response.ok) {
+    if (!response.ok) {
       console.log("Request successful.");
-    } else {
       console.log("Request failed.");
     }
   } catch (error) {
@@ -23,11 +39,15 @@ async function sendRequest(payload) {
   }
 }
 
+let lastTouchPosition = null;
+
 const Keyboard = {
   elements: {
     main: null,
     keysContainer: null,
     keys: [],
+    mouseViewToggleElement: null,
+    mousePadElement: null,
   },
 
   eventHandlers: {
@@ -40,9 +60,80 @@ const Keyboard = {
     capsLock: false,
     activeSpecialKeys: [],
     activeKeys: [],
+    mousepadToggled: false,
+    lastTouch: null,
   },
 
   init() {
+    // mouse view toggle
+    this.elements.mouseViewToggleElement = document.createElement("button");
+    this.elements.mouseViewToggleElement.classList.add("mouse-toggle");
+    this.elements.mouseViewToggleElement.innerHTML = "Mousepad";
+
+    this.elements.mouseViewToggleElement.addEventListener("click", () => {
+      this.elements.mouseViewToggleElement.innerHTML = this.properties
+        .mousepadToggled
+        ? "Mousepad"
+        : "Keyboard";
+      if (this.properties.mousepadToggled) {
+        this.elements.mousePadElement.remove();
+        this.elements.main.appendChild(this.elements.keysContainer);
+      } else {
+        this.elements.keysContainer.remove();
+        this.elements.main.appendChild(this.elements.mousePadElement);
+      }
+      this.properties.mousepadToggled = !this.properties.mousepadToggled;
+    });
+
+    // mouse pad area
+    this.elements.mousePadElement = document.createElement("div");
+    this.elements.mousePadElement.classList.add("mousepad");
+
+    this.elements.mousePadElement.addEventListener("touchend", (e) => {
+      lastTouchPosition = null;
+    });
+
+    this.elements.mousePadElement.addEventListener("click", async () => {
+      await sendRequest({}, "mouse/click");
+    });
+
+    document.addEventListener("dblclick", async () => {
+      await sendRequest({}, "mouse/dblclick");
+    });
+
+    this.elements.mousePadElement.addEventListener(
+      "touchmove",
+      debounce(async (e) => {
+        const { clientX, clientY, target } = e.touches[0];
+        const { height, width } = target.getBoundingClientRect();
+        if (!lastTouchPosition) {
+          lastTouchPosition = {
+            x: Math.abs(height - clientY),
+            y: clientX,
+            height,
+            width,
+          };
+        } else {
+          const point = {
+            x: Math.abs(height - clientY),
+            y: clientX,
+            height,
+            width,
+          };
+          const deltaX = point.x - lastTouchPosition.x;
+          const deltaY = point.y - lastTouchPosition.y;
+          lastTouchPosition = point;
+          await sendRequest(
+            {
+              x: Math.ceil(deltaX * 3),
+              y: Math.ceil(deltaY * 3),
+            },
+            "mouse"
+          );
+        }
+      }, 50)
+    );
+
     // Create main elements
     this.elements.main = document.createElement("div");
     this.elements.keysContainer = document.createElement("div");
@@ -56,6 +147,7 @@ const Keyboard = {
       this.elements.keysContainer.querySelectorAll(".keyboard__key");
 
     // Add to DOM
+    this.elements.main.appendChild(this.elements.mouseViewToggleElement);
     this.elements.main.appendChild(this.elements.keysContainer);
     document.getElementById("container").appendChild(this.elements.main);
 

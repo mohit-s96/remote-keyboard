@@ -6,8 +6,19 @@ from flask_cors import CORS
 def press_key(key):
     pyautogui.press(key)
 
+def normalize_points(point, plane1, plane2):
+    x_ratio = plane2["width"] / plane1["width"]
+    y_ratio = plane2["height"] / plane1["height"]
+
+    
+    x = point["x"] * x_ratio
+    y = point["y"] * y_ratio
+    
+
+    return x, y
+
 # API endpoint to handle incoming requests
-def handle_request(request):
+def handle_key_request(request):
     key = request.get('key')
     ctrl = request.get('ctrl')
     meta = request.get('meta')
@@ -33,6 +44,17 @@ def handle_request(request):
     # Successful response
     return 'Action performed', 200
 
+def handle_mouse_request(request):
+    x = request.get('x')
+    y = request.get('y')
+
+    current_x, current_y = pyautogui.position()
+
+    pyautogui.moveTo(current_x + x, current_y + y)
+
+    # Successful response
+    return 'Action performed', 200
+
 
 # Create a Flask app
 app = Flask(__name__)
@@ -51,8 +73,23 @@ def keypress_handler():
     if not key:
         return 'Bad request', 400
     
-    return handle_request({"key": key, "ctrl": ctrl, "meta": meta, "shift": shift, "alt": alt})
+    return handle_key_request({"key": key, "ctrl": ctrl, "meta": meta, "shift": shift, "alt": alt})
 
-# Run the Flask app
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+@app.route('/mouse', methods=['POST'])
+def mouse_handler():
+    request_data = request.get_json()
+    x = request_data.get('x')
+    y = request_data.get('y')
+    
+    return handle_mouse_request({"x": x, "y": y})
+
+@app.route('/mouse/click', methods=['POST'])
+def mouse_click_handler():
+    pyautogui.click()
+    return "Action Performed", 200
+
+# This isn't working see: https://github.com/asweigart/pyautogui/issues?q=is%3Aissue+is%3Aopen+doubleclick TODO:fix
+@app.route('/mouse/dblclick', methods=['POST'])
+def mouse_dblclick_handler():
+    pyautogui.doubleClick()
+    return "Action Performed", 200
