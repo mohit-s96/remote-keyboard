@@ -1,5 +1,5 @@
 import pyautogui
-from flask import Flask, request
+from flask import Flask, request, send_from_directory
 from flask_cors import CORS
 
 
@@ -59,6 +59,18 @@ def handle_mouse_request(request):
 # Create a Flask app
 app = Flask(__name__)
 CORS(app)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+@app.route('/')
+def send_html():
+    return send_from_directory('.', 'index.html')
+
+@app.route('/js/<path:filename>')
+def serve_js(filename):
+    return send_from_directory('.', filename)
+
 
 # Define the API endpoint
 @app.route('/keypress', methods=['POST'])
