@@ -2,12 +2,6 @@
 
 Watch content on a large monitor but don't want to f*ck your eyes up? This is a simple keyboard/mouse to operate your PC from a mobile phone. Just need both PC and mobile to be on the same local network.
 
-<style>
-    img{
-        transform: rotate(90deg);
-    }
-</style>
-
 ## Screenshots
 
 ### Keyboard
