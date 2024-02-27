@@ -25,7 +25,7 @@ pip install -r requirements.txt
 chmod +x run.sh
 ```
 
-You can now run the server with `./run.sh` and access the keyboard on your phone by going to the url shown on the terminal (something like 182.68.x.xx:5000).
+You can now run the server with `./run.sh` and access the keyboard on your phone by going to the url shown on the terminal (something like 192.68.x.xx:5000).
 
 ### Known Issues
 - Long press doesn't work on keyboard
