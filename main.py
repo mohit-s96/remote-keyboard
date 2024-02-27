@@ -80,7 +80,7 @@ def keypress_handler():
     ctrl = request_data.get('ctrl')
     meta = request_data.get('meta')
     shift = request_data.get('shift')
-    alt = request_data.get('alt')    
+    alt = request_data.get('alt')
 
     if not key:
         return 'Bad request', 400

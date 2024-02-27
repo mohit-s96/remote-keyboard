@@ -21,7 +21,7 @@ function debounce(func, wait) {
 
 async function sendRequest(payload, type = "keypress") {
   try {
-    const response = await fetch(`http://192.168.0.73:5000/${type}`, {
+    const response = await fetch(`/${type}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -97,7 +97,7 @@ const Keyboard = {
       await sendRequest({}, "mouse/click");
     });
 
-    document.addEventListener("dblclick", async () => {
+    this.elements.mousePadElement.addEventListener("dblclick", async () => {
       await sendRequest({}, "mouse/dblclick");
     });
 
